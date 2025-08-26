@@ -40,14 +40,14 @@ class LlmQuoteToolPlugin(Star):
             logger.warning("LLM QQ引用回复工具当前已被禁用，将不会注册函数工具。")
 
     @filter.llm_tool(name="quote_user")
-    async def quote_user_tool(self, event: AstrMessageEvent, message_id: str, reply_message: str, at_original_sender: bool = None) -> MessageEventResult:
+    async def quote_user_tool(self, event: AstrMessageEvent, message_id: str, reply_message: str, at_user_id: str = None) -> MessageEventResult:
         """
         当需要引用回复某条特定消息时，调用此工具来回复该消息并发送内容。
         
         Args:
             message_id (string): 需要引用回复的消息ID。
             reply_message (string): 回复的文本内容。
-            at_original_sender (boolean): 可选，是否在回复中@原消息发送者，不填则使用配置默认值。
+            at_user_id (string): 可选，需要@的用户ID。可以是原消息发送者、其他用户，或留空表示不@任何人。
         """
         # 每次调用工具时，都检查配置中是否启用了该工具
         if not self.is_tool_enabled:
@@ -64,10 +64,15 @@ class LlmQuoteToolPlugin(Star):
             logger.error("quote_user工具调用失败：未提供有效的回复内容。")
             return event.plain_result("工具调用失败：回复内容不能为空。")
 
-        # 确定是否需要@原消息发送者
-        should_at_sender = at_original_sender if at_original_sender is not None else self.auto_at_sender
+        # 判断是否需要@用户
+        should_at_user = at_user_id is not None and at_user_id.strip()
+        
+        # 如果没有提供at_user_id但配置了自动@发送者，则@当前消息发送者
+        if not should_at_user and self.auto_at_sender:
+            at_user_id = event.get_sender_id()
+            should_at_user = True
 
-        logger.info(f"LLM 正在调用 quote_user 工具：引用消息ID {message_id}，回复内容：'{reply_message}'，是否@发送者：{should_at_sender}")
+        logger.info(f"LLM 正在调用 quote_user 工具：引用消息ID {message_id}，回复内容：'{reply_message}'，@用户ID：{at_user_id if should_at_user else '无'}")
 
         # 构建消息链 (MessageChain)
         message_chain = []
@@ -75,15 +80,14 @@ class LlmQuoteToolPlugin(Star):
         # 1. 添加引用回复组件
         message_chain.append(Comp.Reply(id=message_id))
 
-        # 2. 如果需要@原消息发送者，添加@组件
-        if should_at_sender:
-            # 尝试从当前事件中获取发送者ID作为@目标
-            # 注意：这里假设我们要@的是当前对话中的某个用户
-            # 在实际使用中，可能需要根据message_id查找原消息的发送者
-            sender_id = event.get_sender_id()
-            if sender_id and sender_id.isdigit():
-                message_chain.append(Comp.At(qq=int(sender_id)))
+        # 2. 如果需要@用户，添加@组件
+        if should_at_user:
+            # 验证用户ID是否有效（纯数字格式）
+            if at_user_id.isdigit():
+                message_chain.append(Comp.At(qq=int(at_user_id)))
                 message_chain.append(Comp.Plain(text=" "))
+            else:
+                logger.warning(f"quote_user工具调用：提供的at_user_id '{at_user_id}' 不是有效的数字ID，跳过@功能。")
 
         # 3. 添加前缀文本（如果配置了）和主要回复消息
         full_message = f"{self.reply_prefix}{reply_message}" if self.reply_prefix else reply_message

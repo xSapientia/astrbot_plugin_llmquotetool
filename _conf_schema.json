@@ -14,7 +14,7 @@
   "auto_at_sender": {
     "description": "自动@原消息发送者",
     "type": "bool",
-    "hint": "在引用回复时是否自动@原消息的发送者",
+    "hint": "当LLM没有指定@对象时，是否自动@当前消息的发送者",
     "default": false
   },
   "tool_usage_log": {
