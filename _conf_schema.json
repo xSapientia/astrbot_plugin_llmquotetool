@@ -1,0 +1,26 @@
+{
+  "enable_quote_tool": {
+    "description": "启用QQ引用回复工具",
+    "type": "bool",
+    "hint": "控制LLM是否可以调用QQ引用回复功能",
+    "default": true
+  },
+  "reply_prefix_message": {
+    "description": "回复消息前缀",
+    "type": "string",
+    "hint": "在引用回复的消息前添加的前缀文本，留空则不添加前缀",
+    "default": ""
+  },
+  "auto_at_sender": {
+    "description": "自动@原消息发送者",
+    "type": "bool",
+    "hint": "在引用回复时是否自动@原消息的发送者",
+    "default": false
+  },
+  "tool_usage_log": {
+    "description": "记录工具使用日志",
+    "type": "bool",
+    "hint": "是否在日志中记录LLM工具的调用情况",
+    "default": true
+  }
+}

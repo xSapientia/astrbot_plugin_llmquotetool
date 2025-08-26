@@ -1,0 +1,5 @@
+name: astrbot_plugin_llmquotetool
+desc: "提供一个可供LLM调用的QQ引用回复消息工具，支持智能引用回复和消息上下文获取"
+version: 0.0.1
+author: xSapientia
+repo: https://github.com/xSapientia/astrbot_plugin_llmquotetool
